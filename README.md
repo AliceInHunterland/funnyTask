@@ -63,4 +63,4 @@ What can be improved:
 * memory usage 
 * addcost importance
 * handle edge cases and errors
-* chooseWords alternatives should be considered
+* chooseWords alternatives should be considered (dp, A*)
