@@ -19,7 +19,7 @@ Key functions:
 
 * findOptimalCombination(dictionary map[string]int) string: iterates through combinations of four words and calculates the total cost and length of each combination. It keeps track of the best combination with the lowest cost and a sum length within the desired range.
 
-Time and space complexity- O(n^4)
+Time and complexity- O(n^4)
 
 # Usage
 
