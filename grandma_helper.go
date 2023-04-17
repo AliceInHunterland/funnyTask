@@ -1,200 +1,139 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"math"
-	"os"
+	"io/ioutil"
 	"sort"
 	"strings"
 )
 
-var keyboard = map[rune][]rune{
-	'q': {'w', 'a'},
-	'w': {'q', 'e', 's'},
-	'e': {'w', 'r', 'd'},
-	'r': {'e', 't', 'f'},
-	't': {'r', 'y', 'g'},
-	'y': {'t', 'u', 'h'},
-	'u': {'y', 'i', 'j'},
-	'i': {'u', 'o', 'k'},
-	'o': {'i', 'p', 'l'},
-	'p': {'o', 'l'},
-	'a': {'q', 's', 'z'},
-	's': {'w', 'a', 'd', 'z', 'x'},
-	'd': {'e', 's', 'f', 'x', 'c'},
-	'f': {'r', 'd', 'g', 'c', 'v'},
-	'g': {'t', 'f', 'h', 'v', 'b'},
-	'h': {'y', 'g', 'j', 'b', 'n'},
-	'j': {'u', 'h', 'k', 'n', 'm'},
-	'k': {'i', 'j', 'l', 'm'},
-	'l': {'o', 'k'},
-	'z': {'a', 's', 'x'},
-	'x': {'s', 'd', 'z', 'c'},
-	'c': {'d', 'f', 'x', 'v'},
-	'v': {'f', 'g', 'c', 'b'},
-	'b': {'g', 'h', 'v', 'n'},
-	'n': {'h', 'j', 'b', 'm'},
-	'm': {'j', 'k', 'n'},
+// QueueItem represents an item in the queue for BFS
+type QueueItem struct {
+	char rune
+	dist int
 }
 
-type Word struct {
-	Cost        int
-	Length      int
-	FirstLetter byte
-	LastLetter  byte
-	FullWord    string
-}
+// Function to find the shortest path between two letters
+func shortestPath(start rune, end rune, keyboard map[rune][]rune) int {
+	queue := []QueueItem{{char: start, dist: 0}}
+	visited := map[rune]bool{start: true}
 
-func pathLength(word string) int {
-	length := 0
-	var prevChar rune
-	for _, char := range word {
-		if prevChar != 0 {
-			length = length + shortestPath(prevChar, char)
-		}
-		prevChar = char
-	}
-	return length
-}
-
-func calculateCost(lastLetter, firstLetter byte) int {
-	// Function to calculate the additional cost based on the last letter of the previous word
-	// and the first letter of the current word
-
-	if lastLetter == firstLetter {
-		return 0
-	}
-	if lastLetter != 0 {
-		return shortestPath(rune(lastLetter), rune(firstLetter))
-	}
-	return 0
-}
-
-func shortestPath(start, end rune) int {
-	queue := []rune{start}                // queue to store characters to visit
-	visited := map[rune]bool{start: true} // map to keep track of visited characters
-	distances := map[rune]int{start: 0}   // map to store distances from start character
 	for len(queue) > 0 {
 		curr := queue[0]
 		queue = queue[1:]
-		neighbors := keyboard[curr]
+		neighbors := keyboard[curr.char]
 		for _, neighbor := range neighbors {
-			if _, ok := visited[neighbor]; !ok {
+			if !visited[neighbor] {
 				visited[neighbor] = true
-				distances[neighbor] = distances[curr] + 1
-				queue = append(queue, neighbor)
+				if neighbor == end {
+					return curr.dist + 1
+				}
+				queue = append(queue, QueueItem{char: neighbor, dist: curr.dist + 1})
 			}
 		}
-		if curr == end {
-			return distances[curr]
-		}
 	}
-	return -1 // return -1 if end character is not reachable from start character
+
+	return -1
 }
 
-func chooseWords(words []Word) []Word {
-	n := len(words)
+func pathLength(word string, keyboard map[rune][]rune) int {
+	length := 0
+	prevChar := rune(0)
 
-	// Initialize variables to keep track of the best combination
-	bestSumCost := math.MaxInt64
-	var bestWords []Word
-
-	// Precompute costs
-	costs := make([][]int, n)
-	for i := 0; i < n; i++ {
-		costs[i] = make([]int, n)
-		for j := 0; j < n; j++ {
-			costs[i][j] = calculateCost(words[i].LastLetter, words[j].FirstLetter)
+	for _, char := range word {
+		if prevChar != rune(0) {
+			length += shortestPath(prevChar, char, keyboard)
 		}
+		prevChar = char
 	}
 
-	// Iterate through combinations of 4 words
-	for i := 0; i < n-3; i++ {
-		sumCost := 0
-		sumLength := 0
-
-		for j := i; j < i+4; j++ {
-			// Calculate the additional cost based on precomputed costs
-			var additionalCost int
-			if j > 0 {
-				additionalCost = costs[j-1][j]
-			}
-			sumCost += words[j].Cost + additionalCost
-			sumLength += words[j].Length
-		}
-
-		// Check if the current combination has a lower cost and the sum length is within the desired range
-		if sumLength >= 20 && sumLength <= 24 {
-			if sumCost < bestSumCost {
-				bestSumCost = sumCost
-				bestWords = words[i : i+4]
-			}
-			return bestWords
-		}
-	}
-
-	return bestWords
+	return length
 }
-
-func main() {
-
-	//my_words := []string{"hello", "world", "python", "qwerty", "asdfghp", "zxcvbn", "name", "my", "kate", "i", "am", "a", "good", "software", "engineer"}
-	fmt.Println("Enter words separated by spaces:")
-	reader := bufio.NewReader(os.Stdin)
-	input, err := reader.ReadString('\n') // Read input until newline character is encountered
-	if err != nil {
-		fmt.Println("Error reading input:", err)
-		return
-	}
-	my_words := strings.Fields(input) // Split input into words
-	fmt.Println("Words read from console:", my_words)
-
-	words := []Word{}
-	for _, w := range my_words {
-		word := Word{
-			Cost:        pathLength(w), // Set Cost to the length of the word
-			Length:      len(w),        // Set Length to the length of the word
-			FirstLetter: w[0],          // Set FirstLetter to the first byte of the word
-			LastLetter:  w[len(w)-1],   // Set LastLetter to the last byte of the word
-			FullWord:    w,             // Set FullWord to the word itself
-		}
+func findOptimalCombination(dictionary map[string]int) string {
+	words := make([]string, 0, len(dictionary))
+	for word := range dictionary {
 		words = append(words, word)
 	}
-
-	//fmt.Println(words)
 	sort.Slice(words, func(i, j int) bool {
-		return words[i].Cost < words[j].Cost
-	})
-	//fmt.Println(words)
-	// Call the chooseWords function to get the best combination of 4 words
-	bestWords := chooseWords(words)
-	var sumCost = 0
-	// Print the result
-	if len(bestWords) == 4 {
-		fmt.Println("Best words:")
-		for i := 0; i < len(bestWords); i++ {
-			word := bestWords[i]
-			sumCost = sumCost + word.Cost
-			var addCost int
-			if i > 0 {
-				addCost = calculateCost(bestWords[i-1].LastLetter, word.FirstLetter)
-				sumCost = sumCost + addCost
-			}
+		return dictionary[words[i]] > dictionary[words[j]]
+	}) // Sort words by price in descending order
+	bestPrice := int(^uint(0) >> 1)
+	var bestCombination []string
 
-			fmt.Println("Cost:", word.Cost, "AddCost:", addCost, "Length:", word.Length, "First Letter:", string(word.FirstLetter), "Last Letter:", string(word.LastLetter), "Full Word:", word.FullWord)
-
-		}
-		fmt.Println("OVERALL COST:", sumCost)
-		fmt.Print("PASSWORD: ")
-		for i := 0; i < len(bestWords); i++ {
-			fmt.Print(bestWords[i].FullWord)
-			if i < len(bestWords)-1 {
-				fmt.Print(" ")
+	// Generate all combinations of 4 words with pruning for length constraint
+	for i := 0; i < len(words)-3; i++ {
+		for j := i + 1; j < len(words)-2; j++ {
+			for k := j + 1; k < len(words)-1; k++ {
+				for l := k + 1; l < len(words); l++ {
+					combination := []string{words[i], words[j], words[k], words[l]}
+					wordLen := 0
+					for _, word := range combination {
+						wordLen += len(word)
+					}
+					if 20 <= wordLen && wordLen <= 24 {
+						price := 0
+						for _, word := range combination {
+							price += dictionary[word]
+						}
+						if price < bestPrice {
+							// Update the best price and combination if a lower price is found
+							bestPrice = price
+							bestCombination = combination
+						}
+					}
+				}
 			}
 		}
-		fmt.Println()
-	} else {
-		fmt.Println("No valid combination found.")
 	}
+	if len(bestCombination) > 0 {
+		return fmt.Sprintf("Optimal combination: %s", strings.Join(bestCombination, " "))
+	} else {
+		return "No valid combination found."
+	}
+}
+func main() {
+	// Read word list from file
+	wordListBytes, err := ioutil.ReadFile("/Users/ekaterinapavlova/Projects/my-golang-workspace/src/word_list.txt")
+	if err != nil {
+		panic(err)
+	}
+	wordList := strings.Split(string(wordListBytes), "\n")
+
+	keyboard := map[rune][]rune{
+		'a': {'s', 'z', 'q'},
+		'b': {'v', 'g', 'n'},
+		'c': {'x', 'd', 'f', 'v'},
+		'd': {'s', 'e', 'f', 'c', 'x'},
+		'e': {'w', 'r', 'd'},
+		'f': {'d', 'r', 'g', 'v', 'c'},
+		'g': {'f', 't', 'h', 'b', 'v'},
+		'h': {'g', 'y', 'j', 'n', 'b'},
+		'i': {'u', 'o', 'k'},
+		'j': {'h', 'u', 'k', 'm', 'n'},
+		'k': {'j', 'i', 'l', 'm'},
+		'l': {'k', 'o', 'p'},
+		'm': {'n', 'j', 'k'},
+		'n': {'b', 'h', 'j', 'm'},
+		'o': {'i', 'p', 'l'},
+		'p': {'o', 'l'},
+		'q': {'w', 'a'},
+		'r': {'e', 't', 'f'},
+		's': {'a', 'w', 'd', 'x', 'z'},
+		't': {'r', 'y', 'g'},
+		'u': {'y', 'i', 'j'},
+		'v': {'c', 'f', 'g', 'b'},
+		'w': {'q', 's', 'e'},
+		'x': {'z', 's', 'd', 'c'},
+		'y': {'t', 'u', 'h'},
+		'z': {'a', 's', 'x'},
+	}
+
+	mWords := make(map[string]int)
+	for _, word := range wordList {
+		mWords[word] = pathLength(word, keyboard)
+	}
+
+	fmt.Println(mWords)
+	result := findOptimalCombination(mWords)
+	fmt.Println(result)
 }
