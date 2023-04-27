@@ -13,13 +13,22 @@
 # Solution
 Key functions:
 
-* pathLength(word string) int: calculates the total path length between the first and last letters of a word by summing the shortest path distances between adjacent letters using the shortestPath function.
+* shortestPath(start byte, end byte, keyboard map[byte][]byte):  computes the shortest path between two letters on a keyboard layout using a breadth-first search algorithm. It uses a queue to keep track of characters to visit, a map to keep track of visited characters, and a map to store distances from the start character.
 
-* shortestPath(start, end rune) int: computes the shortest path between two letters on a keyboard layout using a breadth-first search algorithm. It uses a queue to keep track of characters to visit, a map to keep track of visited characters, and a map to store distances from the start character.
+* createLettersMatrix(keyboard map[byte][]byte) map[byte]map[byte]int: creates a matrix of costs to move from one letter to another on the keyboard
 
-* findOptimalCombination(dictionary map[string]int) string: iterates through combinations of four words and calculates the total cost and length of each combination. It keeps track of the best combination with the lowest cost and a sum length within the desired range.
+* calculateWordCosts(wordList []string, lettersMatrix map[byte]map[byte]int) map[[3]interface{}][2]interface{}: returns a map of the lowest cost for each set of words with the same first letter, last letter, and length.
 
-Time and complexity- O(n^4)
+* concatenateWords(wordCosts map[[3]interface{}][2]interface{}, lettersMatrix map[byte]map[byte]int) map[[3]interface{}][3]interface{}:returns a new map where the keys are a set of concatenated words, and the values are a tuple of the total cost of concatenation and the list of concatenated words. It accomplishes this by iterating over all possible pairs of keys and updating a matrix of costs to concatenate each pair of keys. The cost of concatenating two sets of words is the sum of the costs of the individual sets plus the cost of moving from the last letter of the first set to the first letter of the second set in the keyboard matrix. The final result is the lowest cost concatenation for each set of words with the same first and last letter and combined length of at most 24.
+
+* findLowestCostWords(inputDict map[[3]interface{}][3]interface{}, lettersMatrix map[byte]map[byte]int) []string: checks if the combined length of the two keys is between 20 and 24, combines the sets of words from the two keys, and checks if the resulting set has 4 unique words and finds the lowest cost.
+
+Time and complexity- O(n^2)
+
+* why not dp?
+need to find unique 4 elements.
+
+* Structure: (first_letter, last_letter, word_length): [cost, word1, word2]
 
 # Usage
 
@@ -27,9 +36,10 @@ The user should enter unique words consisting of English alphabet letters separa
 
 * Input examples: word_list.txt
 
-# Future
-What can be improved:
-* memory usage 
-* handle edge cases and errors
-* chooseWords alternatives should be considered (dp, A*)
-* tests
+
+
+
+
+
+
+
