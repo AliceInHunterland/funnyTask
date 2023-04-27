@@ -11,6 +11,8 @@
 * Реализовать решение на языках Си или Golang под Linux.
 
 # Solution
+<details><summary><b>Spoiler</b></summary>
+ best password for grandma is: "Моя бабушка курит трубку" </details>
 Key functions:
 
 * shortestPath(start byte, end byte, keyboard map[byte][]byte):  computes the shortest path between two letters on a keyboard layout using a breadth-first search algorithm. It uses a queue to keep track of characters to visit, a map to keep track of visited characters, and a map to store distances from the start character.
